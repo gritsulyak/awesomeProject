@@ -1,1 +1,1 @@
-![Go CI](https://github.com/BigDwarf/testci/actions/workflows/ci.yml/badge.svg)
+![Go CI](https://github.com/gritsulyak/awesomeProject/actions/workflows/ci.yml/badge.svg)
