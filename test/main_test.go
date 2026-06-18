@@ -6,9 +6,10 @@ package test
 import (
 	"context"
 	"fmt"
-	"github.com/BigDwarf/testci/internal/application"
 	"os"
 	"testing"
+
+	"github.com/gritsulyak/awesomeProject/internal/application"
 )
 
 func TestMain(m *testing.M) {
@@ -16,8 +17,10 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func createAndRunApp(_ context.Context) *application.App {
+func createAndRunApp(ctx context.Context) *application.App {
 	app := application.NewApp()
-	app.Start()
+	if err := app.Start(ctx); err != nil {
+		panic(err)
+	}
 	return app
 }

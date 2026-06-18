@@ -5,8 +5,9 @@ package satellite
 
 import (
 	"context"
-	"github.com/BigDwarf/testci/internal/model"
 	"sync"
+
+	"github.com/gritsulyak/awesomeProject/internal/model"
 )
 
 // Ensure, that RepositoryMock does implement Repository.

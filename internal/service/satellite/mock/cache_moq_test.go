@@ -5,10 +5,11 @@ package mock
 
 import (
 	"context"
-	"github.com/BigDwarf/testci/internal/service/cache"
-	"github.com/BigDwarf/testci/internal/service/satellite"
 	"sync"
 	"time"
+
+	"github.com/gritsulyak/awesomeProject/internal/service/cache"
+	"github.com/gritsulyak/awesomeProject/internal/service/satellite"
 )
 
 // Ensure, that CacheMock does implement satellite.Cache.

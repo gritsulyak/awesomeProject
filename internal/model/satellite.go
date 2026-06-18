@@ -6,26 +6,18 @@ import (
 )
 
 type Satellite struct {
-	Name string
+	Name string `json:"name"`
 }
 
 func (s *Satellite) Encode() ([]byte, error) {
-	res, err := json.Marshal(s)
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return json.Marshal(s)
 }
 
 func (s *Satellite) Decode(in []byte) error {
 	var res Satellite
-	err := json.NewDecoder(bytes.NewReader(in)).Decode(&res)
-	if err != nil {
+	if err := json.NewDecoder(bytes.NewReader(in)).Decode(&res); err != nil {
 		return err
 	}
-
 	*s = res
-
 	return nil
 }

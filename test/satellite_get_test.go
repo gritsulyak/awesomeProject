@@ -15,21 +15,19 @@ func TestGetSatellite(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	t.Run("get satellite", func(t *testing.T) {
-		req, err := http.NewRequest("GET", "http://0.0.0.0:10080/api/v1/satellite/moon", nil)
+		req, err := http.NewRequest(http.MethodGet, "http://0.0.0.0:10080/api/v1/satellite/moon", nil)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		client := &http.Client{}
-		resp, err := client.Do(req)
+		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			t.Fatal(err)
 		}
 		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
-			t.Error(resp.StatusCode)
+			t.Errorf("expected 200, got %d", resp.StatusCode)
 		}
 	})
-
 }

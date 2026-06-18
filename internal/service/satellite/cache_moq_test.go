@@ -5,9 +5,10 @@ package satellite
 
 import (
 	"context"
-	"github.com/BigDwarf/testci/internal/service/cache"
 	"sync"
 	"time"
+
+	"github.com/gritsulyak/awesomeProject/internal/service/cache"
 )
 
 // Ensure, that CacheMock does implement Cache.

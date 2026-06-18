@@ -2,8 +2,10 @@ package v1
 
 import (
 	"context"
-	"github.com/BigDwarf/testci/internal/model"
+
 	"github.com/labstack/echo/v4"
+
+	model "github.com/gritsulyak/awesomeProject/internal/model"
 )
 
 type SatelliteService interface {
@@ -15,9 +17,6 @@ type Controller struct {
 }
 
 func NewController(g *echo.Group, s SatelliteService) {
-	ctl := &Controller{
-		service: s,
-	}
-
+	ctl := &Controller{service: s}
 	g.GET("/:name", ctl.Get)
 }

@@ -1,23 +1,30 @@
 package main
 
 import (
-	"net/http"
+	"context"
+	"log"
 	"os"
 	"os/signal"
+	"syscall"
 
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-
-	_ "net/http/pprof"
+	"github.com/gritsulyak/awesomeProject/internal/application"
 )
 
 func main() {
-	done := make(chan os.Signal, 1)
-	signal.Notify(done, os.Interrupt)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	http.Handle("/metrics", promhttp.Handler())
+	app := application.NewApp()
+	if err := app.Start(ctx); err != nil {
+		log.Fatalf("failed to start app: %v", err)
+	}
 
-	go func() {
-		http.ListenAndServe("0.0.0.0:6060", nil)
-	}()
-	<-done
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+	<-quit
+
+	log.Println("shutting down...")
+	if err := app.Stop(ctx); err != nil {
+		log.Fatalf("failed to stop app: %v", err)
+	}
 }
