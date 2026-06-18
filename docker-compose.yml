@@ -6,9 +6,9 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_USER: postgres
       POSTGRES_DB: postgres
-      PGPORT: 7432
+      PGPORT: 5432
     ports:
-      - "7432:7432"
+      - "5432:5432"
     deploy:
       resources:
         limits:
@@ -54,7 +54,7 @@ services:
       - "6060:6060"
     environment:
       DB_HOST: postgres
-      DB_PORT: 7432
+      DB_PORT: 5432
       DB_USER: postgres
       DB_PASSWORD: postgres
       DB_NAME: postgres
