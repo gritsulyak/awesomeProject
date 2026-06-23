@@ -44,7 +44,7 @@ func NewDefaultConfig() *Config {
 		},
 		Database: Database{
 			Hosts:    "localhost",
-			Port:     5432,
+			Port:     7432,
 			User:     "postgres",
 			Name:     "postgres",
 			Password: "postgres",
