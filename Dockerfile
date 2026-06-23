@@ -13,6 +13,6 @@ FROM scratch
 COPY --from=builder /app/server /server
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
-EXPOSE 10080 6060
+EXPOSE 10080 6060 6080
 
 ENTRYPOINT ["/server"]

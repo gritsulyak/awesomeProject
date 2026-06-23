@@ -51,7 +51,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - "10080:10080"
-      - "6060:6060"
+      - "6080:6080"
+      - "6060:6060" # pprof
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
@@ -63,7 +64,7 @@ services:
       REDIS_ADDR: redis:7379
       REDIS_PASSWORD: password
       HTTP_LISTEN: "0.0.0.0:10080"
-      METRICS_LISTEN: "0.0.0.0:6060"
+      METRICS_LISTEN: "0.0.0.0:6080"
     depends_on:
       postgres:
         condition: service_healthy

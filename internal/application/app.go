@@ -4,7 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"net/http"
+	"os"
 	"time"
 
 	_ "net/http/pprof"
@@ -31,11 +33,12 @@ type App struct {
 
 func NewApp() *App {
 	return &App{
-		cfg: config.NewDefaultConfig(),
+		cfg: config.NewConfigFromEnv(),
 	}
 }
 
 func (app *App) Start(ctx context.Context) error {
+	log.Printf("Starting app with config: %+v", app.cfg)
 	db, err := openDB(app.cfg.Database.GetDSN())
 	if err != nil {
 		return fmt.Errorf("open db: %w", err)
@@ -43,7 +46,9 @@ func (app *App) Start(ctx context.Context) error {
 	app.db = db
 
 	rdb := redis.NewClient(&redis.Options{
-		Addr: app.cfg.Redis.Addr,
+		Addr:     app.cfg.Redis.Addr,
+		Password: os.Getenv("REDIS_PASSWORD"), // password ← обязательно!
+		DB:       0,
 	})
 
 	repo := satellite.NewRepository(app.db)
