@@ -47,7 +47,7 @@ func (app *App) Start(ctx context.Context) error {
 
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     app.cfg.Redis.Addr,
-		Password: os.Getenv("REDIS_PASSWORD"), // password ← обязательно!
+		Password: os.Getenv("REDIS_PASSWORD"), // password
 		DB:       0,
 	})
 
