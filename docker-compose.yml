@@ -51,8 +51,7 @@ services:
       dockerfile: Dockerfile
     ports:
       - "10080:10080"
-      - "6080:6080"
-      - "6060:6060" # pprof
+      - "6080:6080" # pprof, metrics
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
