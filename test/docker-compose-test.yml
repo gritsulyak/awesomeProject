@@ -1,0 +1,125 @@
+
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.9.0
+    hostname: zookeeper
+    logging:
+      driver: none
+    healthcheck:
+      test: nc -z localhost 2181 || exit -1
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    environment:
+      ZOOKEEPER_TOOLS_LOG4J_LOGLEVEL: 'ERROR'
+      ZOOKEEPER_LOG4J_ROOT_LOGLEVEL: 'ERROR'
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  broker:
+    image: confluentinc/cp-enterprise-kafka:7.9.0
+    hostname: broker
+    logging:
+      driver: none
+    ports:
+      - "8092:9092"
+    healthcheck:
+      test: kafka-topics --bootstrap-server broker:9092 --list
+      interval: 10s
+      timeout: 10s
+      retries: 60
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    environment:
+      KAFKA_TOOLS_LOG4J_LOGLEVEL: 'ERROR'
+      KAFKA_LOG4J_ROOT_LOGLEVEL: 'ERROR'
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://broker:9092
+      KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: broker:29092
+      CONFLUENT_METRICS_REPORTER_ZOOKEEPER_CONNECT: zookeeper:2181
+      CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
+      CONFLUENT_METRICS_ENABLE: 'true'
+      CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
+
+  init-kafka:
+    image: confluentinc/cp-enterprise-kafka:7.9.0
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+      broker:
+        condition: service_healthy
+    entrypoint: ['/bin/sh', '-c']
+    environment:
+      KAFKA_TOOLS_LOG4J_LOGLEVEL: 'ERROR'
+      KAFKA_LOG4J_ROOT_LOGLEVEL: 'ERROR'
+    command: |
+      "
+      kafka-topics --bootstrap-server broker:29092 --list
+
+      echo 'Creating kafka topics'
+      kafka-topics --bootstrap-server broker:29092 --create --if-not-exists --topic af-operation-v1 --replication-factor 1 --partitions 1
+      kafka-topics --bootstrap-server broker:29092 --create --if-not-exists --topic af-rule-v1 --replication-factor 1 --partitions 1
+      kafka-topics --bootstrap-server broker:29092 --create --if-not-exists --topic af-counter-v1 --replication-factor 1 --partitions 1
+      kafka-topics --bootstrap-server broker:29092 --create --if-not-exists --topic af-rule-pool-v1 --replication-factor 1 --partitions 1
+
+      echo 'Successfully created the following topics:'
+      kafka-topics --bootstrap-server broker:29092 --list
+
+      sleep 10000
+      "
+
+  rest-proxy:
+    image: confluentinc/cp-kafka-rest:7.9.0
+    hostname: rest-proxy
+    ports:
+      - "8082:8082"
+    depends_on:
+      broker:
+        condition: service_healthy
+    healthcheck:
+      test: curl --output /dev/null --silent --head --fail http://rest-proxy:8082
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    environment:
+      KAFKA_REST_LOG4J_ROOT_LOGLEVEL: 'error'
+      KAFKA_REST_HOST_NAME: rest-proxy
+      KAFKA_REST_BOOTSTRAP_SERVERS: 'broker:29092'
+      KAFKA_REST_LISTENERS: "http://0.0.0.0:8082"
+
+  postgres:
+    image: postgres:16.8-alpine
+    user: postgres
+    hostname: postgres
+    ports:
+      - "8432:5432"
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - ../scripts/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7.0.14-alpine
+    hostname: redis
+    command: redis-server --requirepass password
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "password", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "8379:6379"
+    restart: always

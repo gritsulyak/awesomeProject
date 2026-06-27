@@ -1,0 +1,109 @@
+
+services:
+  postgres:
+    image: postgres:16.2
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+      PGPORT: 5432
+    ports:
+      - "5432:5432"
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: '4G'
+    volumes:
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - postgres_data:/var/lib/postgresql/data   # ← volume для персистентности
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+
+  redis:
+    image: redis:7.0.14-alpine
+    hostname: redis
+    command: redis-server --port 7379 --requirepass password
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "7379", "-a", "password", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+    ports:
+      - "7379:7379"
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: '4G'
+    networks:
+      - backend
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "10080:10080"
+      - "6080:6080" # pprof, metrics
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: postgres
+      DB_SSLMODE: disable
+      DB_SCHEMA: public
+      REDIS_ADDR: redis:7379
+      REDIS_PASSWORD: password
+      HTTP_LISTEN: "0.0.0.0:10080"
+      METRICS_LISTEN: "0.0.0.0:6080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - backend
+
+  prometheus:
+    image: prom/prometheus:v2.45.3
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./assets/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - app
+    networks:
+      - backend
+
+  grafana:
+    image: grafana/grafana:10.3.1
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: secret
+      GF_PATHS_PROVISIONING: /etc/grafana/provisioning
+    volumes:
+      - ./assets/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./assets/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  grafana_data:
+  postgres_data:
